@@ -59,7 +59,7 @@ pdfRequest request
             r (Right x) = x
 
 pdfHandler :: Snap ()
-pdfHandler = (getsRequest pdfRequest) >>= (either (writeBS . Data.ByteString.Char8.concat) pdfAct)
+pdfHandler = getsRequest pdfRequest >>= either (writeBS . Data.ByteString.Char8.concat) pdfAct
     
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
