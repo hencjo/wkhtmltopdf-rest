@@ -22,15 +22,10 @@ import Data.UUID.V4(nextRandom)
 -- [ ] Remove or implement width, height.
 
 main :: IO ()
-main = quickHttpServe site
+main = quickHttpServe pdfHandler
 
-site :: Snap ()
-site =
-    ifTop (writeBS "hello world") <|>
-    route [ ("foo", writeBS "bar")
-          , ("pdf/", pdfHandler)
-          ] <|>
-    dir "static" (serveDirectory ".")
+--site :: Snap ()
+--site = pdfHandler
 
 maybeToEither :: a1 -> Maybe a -> Either a1 a
 maybeToEither = flip maybe Right . Left
