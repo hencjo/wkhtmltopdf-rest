@@ -1,18 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Control.Monad.IO.Class
-
 import Snap.Core
 import Snap.Http.Server
-
+import Control.Monad.IO.Class
 import Data.ByteString.Char8(unpack, concat, ByteString)
-
 import Data.Either
-
+import Data.UUID.V4(nextRandom)
 import System.Process
 import System.IO
-import Data.UUID.V4(nextRandom)
 
 -- Requires wkhtmltopdf, xvfb to be installed.
 
@@ -41,16 +37,6 @@ data PdfRequest = PdfRequest {
   src :: String
 } deriving (Show)
 
-requestify :: Either ByteString ByteString -> Either ByteString ByteString -> Either ByteString ByteString -> PdfRequest
-requestify username key src = do
-  let username' = unpack (r username)
-  let key' = unpack (r key)
-  let src' = unpack (r src)
-  PdfRequest username' key' src'
-    where 
-      r :: Either a b -> b
-      r (Right x) = x
-
 pdfRequest :: Request -> Either [ByteString] PdfRequest
 pdfRequest request
     | errors == [] = Right (requestify username key src)
@@ -61,8 +47,16 @@ pdfRequest request
       width    = missing request "width"
       height   = missing request "height"
       src      = missing request "src"
-      errors   = lefts [username, key, width, height, src] 
-
+      errors   = lefts [username, key, width, height, src]
+      requestify :: Either ByteString ByteString -> Either ByteString ByteString -> Either ByteString ByteString -> PdfRequest
+      requestify username key src = do
+        let username' = unpack (r username)
+        let key' = unpack (r key)
+        let src' = unpack (r src)
+        PdfRequest username' key' src'
+          where 
+            r :: Either a b -> b
+            r (Right x) = x
 
 pdfHandler :: Snap ()
 pdfHandler = (getsRequest pdfRequest) >>= (either (writeBS . Data.ByteString.Char8.concat) pdfAct)
