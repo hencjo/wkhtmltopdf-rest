@@ -16,6 +16,8 @@ import System.Process
 import System.IO
 import Data.UUID.V4(nextRandom)
 
+-- Requires wkhtmltopdf, xvfb to be installed.
+
 -- TODO
 -- [ ] Remove temporary files.
 -- [ ] Actually do Authentication
