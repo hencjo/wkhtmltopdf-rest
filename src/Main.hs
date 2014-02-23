@@ -1,14 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Control.Applicative
 import Control.Monad.IO.Class
 
 import Snap.Core
-import Snap.Util.FileServe
 import Snap.Http.Server
 
-import Data.ByteString.Char8(pack, unpack, concat, ByteString)
+import Data.ByteString.Char8(unpack, concat, ByteString)
 
 import Data.Either
 
@@ -31,8 +29,8 @@ maybeToEither = flip maybe Right . Left
 
 missing :: Request -> ByteString -> Either ByteString ByteString
 missing request param = case values of 
-                          (Just (v:vs)) -> Right v
-                          otherwise     -> Left (Data.ByteString.Char8.concat ("Missing parameter \"" : param : "\"" : []))
+                          (Just (v:_)) -> Right v
+                          _            -> Left (Data.ByteString.Char8.concat ("Missing parameter \"" : param : "\"" : []))
     where
       values :: Maybe [ByteString]
       values = rqPostParam param request 
@@ -48,7 +46,7 @@ requestify username key src = do
   let username' = unpack (r username)
   let key' = unpack (r key)
   let src' = unpack (r src)
-  PdfRequest (username') (key') (src')
+  PdfRequest username' key' src'
     where 
       r :: Either a b -> b
       r (Right x) = x
@@ -56,7 +54,7 @@ requestify username key src = do
 pdfRequest :: Request -> Either [ByteString] PdfRequest
 pdfRequest request
     | errors == [] = Right (requestify username key src)
-    | otherwise    = Left (errors)
+    | otherwise    = Left errors
     where 
       username = missing request "username"
       key      = missing request "key"
@@ -67,7 +65,7 @@ pdfRequest request
 
 
 pdfHandler :: Snap ()
-pdfHandler = (getsRequest pdfRequest) >>= (either (\es -> writeBS (Data.ByteString.Char8.concat es)) (pdfAct))
+pdfHandler = (getsRequest pdfRequest) >>= (either (writeBS . Data.ByteString.Char8.concat) pdfAct)
     
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
