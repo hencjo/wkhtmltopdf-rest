@@ -81,7 +81,10 @@ pdf url = do
     devNull <- openFile "/dev/null" AppendMode
     randomUUID <- nextRandom
     let randomFilename = (show randomUUID) ++ ".pdf"
-    (_, _, _, pHandle) <- createProcess (proc "wkhtmltopdf" ["--page-size","A4", url, randomFilename]){ std_err = (UseHandle devNull)  }
+    let commandLine = words ("xvfb-run wkhtmltopdf --page-size A4 " ++ url ++ " " ++ randomFilename)
+    putStrLn (show commandLine)
+    --(_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = (UseHandle devNull)  }
+    (_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = Inherit } 
     exitCode <- waitForProcess pHandle
     hClose devNull
     return randomFilename
