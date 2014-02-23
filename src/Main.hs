@@ -82,7 +82,7 @@ pdf url = do
     devNull <- openFile "/dev/null" AppendMode
     randomUUID <- nextRandom
     let randomFilename = (show randomUUID) ++ ".pdf"
-    (_, _, _, pHandle) <- createProcess (proc "wkhtmltopdf" ["--zoom","1.4", url, randomFilename]){ std_err = (UseHandle devNull)  }
+    (_, _, _, pHandle) <- createProcess (proc "wkhtmltopdf" ["--page-size","A4", url, randomFilename]){ std_err = (UseHandle devNull)  }
     exitCode <- waitForProcess pHandle
     hClose devNull
     return randomFilename
