@@ -16,6 +16,11 @@ import System.Process
 import System.IO
 import Data.UUID.V4(nextRandom)
 
+-- TODO
+-- [ ] Remove temporary files.
+-- [ ] Actually do Authentication
+-- [ ] Remove or implement width, height.
+
 main :: IO ()
 main = quickHttpServe site
 
