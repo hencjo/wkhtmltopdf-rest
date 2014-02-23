@@ -24,9 +24,6 @@ import Data.UUID.V4(nextRandom)
 main :: IO ()
 main = quickHttpServe pdfHandler
 
---site :: Snap ()
---site = pdfHandler
-
 maybeToEither :: a1 -> Maybe a -> Either a1 a
 maybeToEither = flip maybe Right . Left
 
