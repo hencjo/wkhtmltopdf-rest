@@ -39,9 +39,9 @@ data PdfRequest = PdfRequest {
 } deriving (Show)
 
 pdfRequest :: Request -> Either [String] PdfRequest
-pdfRequest request
-    | errors == [] = Right (requestify username key src)
-    | otherwise    = Left errors
+pdfRequest request = case oscar of 
+                       (Right pdf)  -> Right pdf
+                       _            -> Left errors
     where 
       username = missing request "username"
       key      = missing request "key"
@@ -50,15 +50,6 @@ pdfRequest request
       src      = missing request "src"
       errors   = lefts [username, key, width, height, src]
       oscar    = PdfRequest <$> username <*> key <*> src
-      requestify :: Either String String -> Either String String -> Either String String -> PdfRequest
-      requestify username key src = do
-        let username' = (r username)
-        let key' = (r key)
-        let src' = (r src)
-        PdfRequest username' key' src'
-          where 
-            r :: Either a b -> b
-            r (Right x) = x
 
 pdfHandler :: Snap ()
 pdfHandler = getsRequest pdfRequest >>= either (writeBS . pack . Prelude.concat) pdfAct
