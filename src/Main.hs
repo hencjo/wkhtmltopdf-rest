@@ -61,8 +61,7 @@ pdfAct req = do
 pdf :: String -> IO (String)
 pdf url = do 
     devNull <- openFile "/dev/null" AppendMode
-    randomUUID <- nextRandom
-    let randomFilename = (show randomUUID) ++ ".pdf"
+    randomFilename <- (++".pdf") <$> show <$> nextRandom 
     let commandLine = words ("xvfb-run wkhtmltopdf --page-size A4 " ++ url ++ " " ++ randomFilename)
     putStrLn (show commandLine)
     --(_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = (UseHandle devNull)  }
