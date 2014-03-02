@@ -16,7 +16,7 @@ import System.IO
 -- TODO
 -- [ ] Remove temporary files.
 -- [ ] Actually do Authentication
--- [ ] Remove or implement width, height.
+-- [ ] Implement pageSize
 
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d page-size=A4 > meow.pdf && zathura meow.pdf 
