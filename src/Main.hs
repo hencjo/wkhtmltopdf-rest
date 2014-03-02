@@ -24,16 +24,10 @@ import System.IO
 main :: IO ()
 main = quickHttpServe pdfHandler
 
-maybeToEither :: a1 -> Maybe a -> Either a1 a
-maybeToEither = flip maybe Right . Left
-
 missing :: Request -> String -> Either String String
-missing request param = case values of 
+missing request param = case (rqPostParam (pack param) request) of 
                           (Just (v:_)) -> Right (unpack v)
                           _            -> Left ("Missing parameter \"" ++ param ++ "\"")
-    where
-      values :: Maybe [ByteString]
-      values = rqPostParam (pack param) request 
 
 data PdfRequest = PdfRequest {
   username :: String,
