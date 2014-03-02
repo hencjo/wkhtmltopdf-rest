@@ -18,6 +18,9 @@ import System.IO
 -- [ ] Actually do Authentication
 -- [ ] Remove or implement width, height.
 
+-- Test it like this:
+-- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d width=300mm -d height=200mm > meow.pdf && zathura meow.pdf  
+
 main :: IO ()
 main = quickHttpServe pdfHandler
 
