@@ -5,7 +5,7 @@ import Snap.Core
 import Snap.Http.Server
 import Control.Monad.IO.Class
 import Control.Applicative
-import Data.ByteString.Char8(pack, unpack, concat, ByteString)
+import Data.ByteString.Char8(pack, unpack)
 import Data.Either
 import Data.UUID.V4(nextRandom)
 import System.Process
