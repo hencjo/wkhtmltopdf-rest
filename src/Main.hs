@@ -19,7 +19,7 @@ import System.IO
 -- [ ] Remove or implement width, height.
 
 -- Test it like this:
--- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key > meow.pdf && zathura meow.pdf 
+-- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d page-size=A4 > meow.pdf && zathura meow.pdf 
 
 main :: IO ()
 main = quickHttpServe pdfHandler
@@ -38,7 +38,8 @@ missing request param = case values of
 data PdfRequest = PdfRequest {
   username :: String,
   key :: String,
-  src :: String
+  src :: String,
+  pageSize :: String
 } deriving (Show)
 
 pdfRequest :: Request -> Either [String] PdfRequest
@@ -49,8 +50,9 @@ pdfRequest request = case oscar of
       username = missing request "username"
       key      = missing request "key"
       src      = missing request "src"
-      errors   = lefts [username, key, src]
-      oscar    = PdfRequest <$> username <*> key <*> src
+      pageSize = missing request "page-size"
+      errors   = lefts [username, key, src, pageSize]
+      oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: Snap ()
 pdfHandler = getsRequest pdfRequest >>= either (writeBS . pack . Prelude.concat) pdfAct
