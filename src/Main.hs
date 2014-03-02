@@ -19,7 +19,7 @@ import System.IO
 -- [ ] Remove or implement width, height.
 
 -- Test it like this:
--- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d width=300mm -d height=200mm > meow.pdf && zathura meow.pdf  
+-- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key > meow.pdf && zathura meow.pdf 
 
 main :: IO ()
 main = quickHttpServe pdfHandler
@@ -48,10 +48,8 @@ pdfRequest request = case oscar of
     where 
       username = missing request "username"
       key      = missing request "key"
-      width    = missing request "width"
-      height   = missing request "height"
       src      = missing request "src"
-      errors   = lefts [username, key, width, height, src]
+      errors   = lefts [username, key, src]
       oscar    = PdfRequest <$> username <*> key <*> src
 
 pdfHandler :: Snap ()
