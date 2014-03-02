@@ -4,7 +4,8 @@ module Main where
 import Snap.Core
 import Snap.Http.Server
 import Control.Monad.IO.Class
-import Data.ByteString.Char8(unpack, concat, ByteString)
+import Control.Applicative
+import Data.ByteString.Char8(pack, unpack, concat, ByteString)
 import Data.Either
 import Data.UUID.V4(nextRandom)
 import System.Process
@@ -23,13 +24,13 @@ main = quickHttpServe pdfHandler
 maybeToEither :: a1 -> Maybe a -> Either a1 a
 maybeToEither = flip maybe Right . Left
 
-missing :: Request -> ByteString -> Either ByteString ByteString
+missing :: Request -> String -> Either String String
 missing request param = case values of 
-                          (Just (v:_)) -> Right v
-                          _            -> Left (Data.ByteString.Char8.concat ("Missing parameter \"" : param : "\"" : []))
+                          (Just (v:_)) -> Right (unpack v)
+                          _            -> Left ("Missing parameter \"" ++ param ++ "\"")
     where
       values :: Maybe [ByteString]
-      values = rqPostParam param request 
+      values = rqPostParam (pack param) request 
 
 data PdfRequest = PdfRequest {
   username :: String,
@@ -37,7 +38,7 @@ data PdfRequest = PdfRequest {
   src :: String
 } deriving (Show)
 
-pdfRequest :: Request -> Either [ByteString] PdfRequest
+pdfRequest :: Request -> Either [String] PdfRequest
 pdfRequest request
     | errors == [] = Right (requestify username key src)
     | otherwise    = Left errors
@@ -48,18 +49,19 @@ pdfRequest request
       height   = missing request "height"
       src      = missing request "src"
       errors   = lefts [username, key, width, height, src]
-      requestify :: Either ByteString ByteString -> Either ByteString ByteString -> Either ByteString ByteString -> PdfRequest
+      oscar    = PdfRequest <$> username <*> key <*> src
+      requestify :: Either String String -> Either String String -> Either String String -> PdfRequest
       requestify username key src = do
-        let username' = unpack (r username)
-        let key' = unpack (r key)
-        let src' = unpack (r src)
+        let username' = (r username)
+        let key' = (r key)
+        let src' = (r src)
         PdfRequest username' key' src'
           where 
             r :: Either a b -> b
             r (Right x) = x
 
 pdfHandler :: Snap ()
-pdfHandler = getsRequest pdfRequest >>= either (writeBS . Data.ByteString.Char8.concat) pdfAct
+pdfHandler = getsRequest pdfRequest >>= either (writeBS . pack . Prelude.concat) pdfAct
     
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
