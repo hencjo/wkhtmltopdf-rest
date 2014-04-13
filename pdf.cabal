@@ -30,5 +30,5 @@ executable pdf
     transformers              == 0.3.0.0  
 
   ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
-                 -fno-warn-unused-do-bind
+                 -fno-warn-unused-do-bind -fwarn-incomplete-uni-patterns
 
