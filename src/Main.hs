@@ -18,6 +18,7 @@ import System.IO
 -- [ ] Remove temporary files.
 -- [ ] Authenticate against config-file.
 -- [ ] Use PDFCrowds API so that it's easy to switch.
+-- [ ] HTTP Status Codes on Errors.
 -- ============ good enough ======== 
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
 -- [ ] Validate correct values for pageSize
