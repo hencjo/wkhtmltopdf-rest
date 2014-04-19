@@ -15,8 +15,9 @@ import System.IO
 -- Requires wkhtmltopdf, xvfb to be installed.
 
 -- TODO
--- [ ] Remove temporary files.
 -- [ ] Authenticate against config-file.
+-- ============ Pushable ========
+-- [ ] Remove temporary files.
 -- [ ] Use PDFCrowds API so that it's easy to switch.
 -- [ ] HTTP Status Codes on Errors.
 -- ============ good enough ======== 
@@ -28,13 +29,15 @@ import System.IO
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
 
-type ApiKey = (String, String)
+type Username = String
+type ApiKey = String
+type Credentials = (Username, ApiKey)
 
 main :: IO ()
 main = quickHttpServe (pdfHandler authenticator)
     where
-        authenticator :: (ApiKey) -> Bool
-        authenticator apiKey = apiKey == ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")
+        authenticator :: (Credentials) -> Bool
+        authenticator c = ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo") == c
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
@@ -42,8 +45,8 @@ missing request param = case (rqPostParam (pack param) request) of
                           _            -> Left ("Missing parameter \"" ++ param ++ "\"")
 
 data PdfRequest = PdfRequest {
-  username :: String,
-  key :: String,
+  username :: Username,
+  key :: ApiKey,
   src :: String,
   pageSize :: String
 } deriving (Show)
@@ -60,10 +63,10 @@ pdfRequest request = case oscar of
       errors   = lefts [username, key, src, pageSize]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
-pdfHandler :: (ApiKey -> Bool) -> Snap ()
+pdfHandler :: (Credentials -> Bool) -> Snap ()
 pdfHandler authenticator = (getsRequest (pdfRequest >=> (auth authenticator))) >>= either (writeBS . pack . Prelude.concat) pdfAct
 
-auth :: (ApiKey -> Bool) -> PdfRequest -> Either [String] PdfRequest
+auth :: (Credentials -> Bool) -> PdfRequest -> Either [String] PdfRequest
 auth apiKeyAuthenticator req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
