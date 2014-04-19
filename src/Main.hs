@@ -25,10 +25,15 @@ import System.IO
 -- [ ] Validate src, it should not be possible to escape bash!
 
 -- Test it like this:
--- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d page-size=A4 > meow.pdf && zathura meow.pdf 
+-- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
+
+type ApiKey = (String, String)
 
 main :: IO ()
-main = quickHttpServe pdfHandler
+main = quickHttpServe (pdfHandler authenticator)
+    where
+        authenticator :: (ApiKey) -> Bool
+        authenticator apiKey = apiKey == ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
@@ -54,15 +59,15 @@ pdfRequest request = case oscar of
       errors   = lefts [username, key, src, pageSize]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
-pdfHandler :: Snap ()
-pdfHandler = (getsRequest (pdfRequest >=> auth)) >>= either (writeBS . pack . Prelude.concat) pdfAct
+pdfHandler :: (ApiKey -> Bool) -> Snap ()
+pdfHandler authenticator = (getsRequest (pdfRequest >=> (auth authenticator))) >>= either (writeBS . pack . Prelude.concat) pdfAct
 
-auth :: PdfRequest -> Either [String] PdfRequest
-auth req
-    | authenticates = (Right req)
-    | otherwise     = (Left ["Authorisation failed"])
-    where
-        authenticates = (username req, key req) == ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")
+auth :: (ApiKey -> Bool) -> PdfRequest -> Either [String] PdfRequest
+auth apiKeyAuthenticator req
+     | authenticates = (Right req)
+     | otherwise     = (Left ["Authorisation failed"])
+     where
+        authenticates = apiKeyAuthenticator (username req, key req)
 
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
