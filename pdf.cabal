@@ -27,7 +27,8 @@ executable pdf
     snap-server               >= 0.9   && < 0.11,
     process                   == 1.1.0.1,
     uuid                      == 1.3.3,
-    transformers              == 0.3.0.0  
+    transformers              == 0.3.0.0,
+    ConfigFile                == 1.1.1
 
   ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
                  -fno-warn-unused-do-bind -fwarn-incomplete-uni-patterns

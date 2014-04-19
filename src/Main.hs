@@ -7,6 +7,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Control.Applicative
 import Data.ByteString.Char8(pack, unpack)
+import Data.ConfigFile
 import Data.Either
 import Data.UUID.V4(nextRandom)
 import System.Process
@@ -33,11 +34,20 @@ type Username = String
 type ApiKey = String
 type Credentials = (Username, ApiKey)
 
+data PdfConfig = PdfConfig {
+  credentials :: Credentials
+} deriving (Show)
+
 main :: IO ()
-main = quickHttpServe (pdfHandler authenticator)
-    where
-        authenticator :: (Credentials) -> Bool
-        authenticator c = ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo") == c
+main = do
+    c <- config "pdf.conf"
+    let p = pdfHandler c 
+    quickHttpServe p 
+
+config :: FilePath -> IO PdfConfig
+config filePath = do
+--    cp <- readfile emptyCP "pdf.conf"
+    return (PdfConfig ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo"))
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
@@ -63,15 +73,15 @@ pdfRequest request = case oscar of
       errors   = lefts [username, key, src, pageSize]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
-pdfHandler :: (Credentials -> Bool) -> Snap ()
-pdfHandler authenticator = (getsRequest (pdfRequest >=> (auth authenticator))) >>= either (writeBS . pack . Prelude.concat) pdfAct
+pdfHandler :: PdfConfig -> Snap ()
+pdfHandler config = (getsRequest (pdfRequest >=> (auth config))) >>= either (writeBS . pack . Prelude.concat) pdfAct
 
-auth :: (Credentials -> Bool) -> PdfRequest -> Either [String] PdfRequest
-auth apiKeyAuthenticator req
+auth :: PdfConfig -> PdfRequest -> Either [String] PdfRequest
+auth config req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
      where
-        authenticates = apiKeyAuthenticator (username req, key req)
+        authenticates = (username req, key req) == (credentials config)
 
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
