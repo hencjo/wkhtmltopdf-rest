@@ -16,8 +16,13 @@ import System.IO
 
 -- TODO
 -- [ ] Remove temporary files.
--- [ ] Actually do Authentication
+-- [ ] Authenticate against config-file.
+-- [ ] Use PDFCrowds API so that it's easy to switch.
+-- ============ good enough ======== 
+-- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
+-- [ ] Validate correct values for pageSize
 -- [ ] Implement pageSize
+-- [ ] Validate src, it should not be possible to escape bash!
 
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username=username -d key=key -d page-size=A4 > meow.pdf && zathura meow.pdf 
