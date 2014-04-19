@@ -3,6 +3,7 @@ module Main where
 
 import Snap.Core
 import Snap.Http.Server
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Applicative
 import Data.ByteString.Char8(pack, unpack)
@@ -49,8 +50,15 @@ pdfRequest request = case oscar of
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: Snap ()
-pdfHandler = getsRequest pdfRequest >>= either (writeBS . pack . Prelude.concat) pdfAct
-    
+pdfHandler = (getsRequest (pdfRequest >=> auth)) >>= either (writeBS . pack . Prelude.concat) pdfAct
+
+auth :: PdfRequest -> Either [String] PdfRequest
+auth req
+    | authenticates = (Right req)
+    | otherwise     = (Left ["Authorisation failed"])
+    where
+        authenticates = (username req, key req) == ("henrik@hencjo.com","RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")
+
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
     let url = src req
