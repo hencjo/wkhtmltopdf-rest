@@ -20,7 +20,6 @@ import qualified Data.ByteString as B
 -- Requires wkhtmltopdf, xvfb to be installed.
 
 -- TODO
--- [ ] Authenticate against config-file.
 -- [ ] Validate src, it should not be possible to escape bash!
 -- ============ good enough ======== 
 -- [ ] Use PDFCrowds API so that it's easy to switch.
