@@ -31,7 +31,7 @@ import System.IO
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
 
 newtype Username = Username String deriving (Show, Eq)
-type ApiKey = String
+newtype ApiKey = ApiKey String deriving (Show, Eq)
 type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
@@ -47,7 +47,7 @@ main = do
 config :: FilePath -> IO PdfConfig
 config filePath = do
 --    cp <- readfile emptyCP "pdf.conf"
-    return (PdfConfig ((Username "henrik@hencjo.com"),"RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo"))
+    return (PdfConfig ((Username "henrik@hencjo.com"), (ApiKey "RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")))
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
@@ -67,12 +67,15 @@ pdfRequest request = case oscar of
                        _            -> Left errors
     where 
       username = fmap Username (missing request "username")
-      key      = missing request "key"
+      key      = fmap ApiKey (missing request "key")
       src      = missing request "src"
       pageSize = missing request "page-size"
       errors   = lefts [
         (fmap show username), 
-        key, src, pageSize]
+        (fmap show key), 
+        src, 
+        pageSize
+        ]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: PdfConfig -> Snap ()
