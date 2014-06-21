@@ -9,6 +9,8 @@ import Control.Applicative
 import Data.ByteString.Char8(pack, unpack)
 import Data.ConfigFile
 import Data.Either
+import Data.Either.Utils
+import System.Environment(getArgs)
 import System.Process
 import System.IO
 import Safe(readMay)
@@ -43,19 +45,28 @@ data PageSize = A4 | Letter deriving (Show, Read)
 type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
-  credentials :: Credentials
+  credentials :: Credentials,
+  port :: Int
 } deriving (Show)
 
 main :: IO ()
 main = do
-    c <- config "pdf.conf"
-    let p = pdfHandler c 
-    quickHttpServe p 
-
+    a <- getArgs
+    let configFile = case a of 
+                        f:_ -> f
+                        _   -> error "Expected path to config file as argument."
+    putStrLn ("Reading configuration from " ++ configFile)
+    c <- config configFile
+    httpServe (setPort (port c) emptyConfig) (pdfHandler c)  
+    
 config :: FilePath -> IO PdfConfig
 config filePath = do
---    cp <- readfile emptyCP "pdf.conf"
-    return (PdfConfig ((Username "henrik@hencjo.com"), (ApiKey "RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo")))
+    val <- readfile emptyCP filePath
+    let cp = forceEither val
+    let meow = forceEither $ (get cp "DEFAULT" "web.port")::Int
+    return (PdfConfig 
+        ((Username "henrik@hencjo.com"), (ApiKey "RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo"))
+        meow)
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 

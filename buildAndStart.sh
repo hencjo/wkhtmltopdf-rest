@@ -1,2 +1,2 @@
 #!/bin/bash
-cabal build && dist/build/pdf/pdf
+cabal build && dist/build/pdf/pdf backend.conf
