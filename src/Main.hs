@@ -33,7 +33,7 @@ import qualified Data.ByteString as B
 newtype Username = Username String deriving (Eq)
 newtype ApiKey = ApiKey String deriving (Eq)
 newtype SrcUrl = SrcUrl String deriving (Show)
-newtype WebPort = WebPort Int deriving (Show)
+newtype Port = Port Int deriving (Show)
 
 instance Show Username where
     show (Username a) = show a
@@ -45,7 +45,7 @@ type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
   credentials :: Credentials,
-  port :: WebPort
+  port :: Port
 } deriving (Show)
 
 main :: IO ()
@@ -57,18 +57,20 @@ main = do
     putStrLn ("Reading configuration from " ++ configFile)
     c <- config $! configFile
     putStrLn (show c)
-    let port = (case (port c) of 
-        (WebPort p) -> p)
-    in httpServe (setPort port emptyConfig) (pdfHandler c)  
+    httpServe (setPort (port2 c) emptyConfig) (pdfHandler c)  
+        where 
+            port2 :: PdfConfig -> Int
+            port2 pdfConfig = case (port pdfConfig) of 
+                                 (Port p) -> p
     
 config :: FilePath -> IO PdfConfig
 config filePath = do
     val <- readfile emptyCP filePath
     let cp = forceEither val
-    let webPort = forceEither $ (get cp "DEFAULT" "web.port")::Int
+    let port = forceEither $ (get cp "DEFAULT" "web.port")::Int
     let username = Username <$> forceEither $ get cp "DEFAULT" "api.user"
     let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
-    return (PdfConfig (username, apiKey) webPort)
+    return (PdfConfig (username, apiKey) (Port port))
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
