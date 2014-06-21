@@ -31,9 +31,15 @@ import Safe(readMay)
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
 
-newtype Username = Username String deriving (Show, Eq)
-newtype ApiKey = ApiKey String deriving (Show, Eq)
+newtype Username = Username String deriving (Eq)
+newtype ApiKey = ApiKey String deriving (Eq)
 newtype SrcUrl = SrcUrl String deriving (Show)
+
+instance Show Username where
+    show (Username a) = show a
+instance Show ApiKey where
+    show (ApiKey a) = show a
+
 data PageSize = A4 | Letter deriving (Show, Read)
 type Credentials = (Username, ApiKey)
 
@@ -68,7 +74,7 @@ data PdfRequest = PdfRequest {
   key :: ApiKey,
   src :: SrcUrl,
   pageSize :: PageSize
-} deriving (Show)
+}
 
 pdfRequest :: Request -> Either [String] PdfRequest
 pdfRequest request = case oscar of 
@@ -105,13 +111,15 @@ pdfAct req = do
     sendFile file
 
 pdf :: SrcUrl -> IO (String)
-pdf url = do 
+pdf (SrcUrl url) = do 
     devNull <- openFile "/dev/null" AppendMode
     randomFilename <- (++".pdf") <$> show <$> nextRandom 
-    let commandLine = words ("xvfb-run wkhtmltopdf --page-size A4 " ++ (show url) ++ " " ++ randomFilename)
-    putStrLn (show commandLine)
+    let commandLine = "xvfb-run wkhtmltopdf --page-size A4 " ++ (url) ++ " " ++ randomFilename
+    putStrLn commandLine
+
+    let cl = words commandLine
     --(_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = (UseHandle devNull)  }
-    (_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = Inherit } 
+    (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
     exitCode <- waitForProcess pHandle
     hClose devNull
     return randomFilename
