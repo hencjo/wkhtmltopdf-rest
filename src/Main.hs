@@ -13,18 +13,20 @@ import Data.UUID.V4(nextRandom)
 import System.Process
 import System.IO
 import Safe(readMay)
+import System.IO.Temp(withSystemTempFile)
+import qualified Data.ByteString as B
 
 -- Requires wkhtmltopdf, xvfb to be installed.
 
 -- TODO
 -- [ ] Authenticate against config-file.
--- [ ] Remove temporary files.
 -- [ ] Validate src, it should not be possible to escape bash!
 -- ============ good enough ======== 
 -- [ ] Use PDFCrowds API so that it's easy to switch.
 -- [ ] HTTP Status Codes on Errors.
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
+-- [ ] Seems only one xvfb-run can run at a time.
 
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
@@ -100,24 +102,21 @@ auth config req
      where
         authenticates = (username req, key req) == (credentials config)
 
+callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (B.ByteString)
+callback (SrcUrl url) pageSize tempFile tempHandle = do
+    hClose tempHandle
+    devNull <- openFile "/dev/null" AppendMode
+    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ url ++ " " ++ tempFile
+    putStrLn commandLine
+    let cl = words commandLine
+    (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
+    exitCode <- waitForProcess pHandle
+    hClose devNull
+    B.readFile tempFile
+
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
     let url = src req
     modifyResponse $ setContentType "application/pdf"
-    file <- liftIO (pdf url (pageSize req))
-    sendFile file
-
-pdf :: SrcUrl -> PageSize -> IO (String)
-pdf (SrcUrl url) pageSize = do 
-    devNull <- openFile "/dev/null" AppendMode
-    randomFilename <- (++".pdf") <$> show <$> nextRandom 
-    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ url ++ " " ++ randomFilename
-    putStrLn commandLine
-
-    let cl = words commandLine
-    --(_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = (UseHandle devNull)  }
-    (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
-    exitCode <- waitForProcess pHandle
-    hClose devNull
-    return randomFilename
-
+    bs <- liftIO (withSystemTempFile "wkhtmltopdf-rest.pdf" (callback (src req) (pageSize req)))
+    writeBS bs
