@@ -20,6 +20,7 @@ import qualified Data.ByteString as B
 -- Requires wkhtmltopdf, xvfb to be installed.
 
 -- TODO
+-- ==== bad ====
 -- [ ] Validate src, it should not be possible to escape bash!
 -- ============ good enough ======== 
 -- [ ] Use PDFCrowds API so that it's easy to switch.
@@ -29,12 +30,10 @@ import qualified Data.ByteString as B
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 -- [ ] Seems only one xvfb-run can run at a time.
 
--- Test it like this:
--- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
-
 newtype Username = Username String deriving (Eq)
 newtype ApiKey = ApiKey String deriving (Eq)
 newtype SrcUrl = SrcUrl String deriving (Show)
+newtype WebPort = WebPort Int deriving (Show)
 
 instance Show Username where
     show (Username a) = show a
@@ -46,7 +45,7 @@ type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
   credentials :: Credentials,
-  port :: Int
+  port :: WebPort
 } deriving (Show)
 
 main :: IO ()
@@ -56,9 +55,11 @@ main = do
                         f:_ -> f
                         _   -> error "Expected path to config file as argument."
     putStrLn ("Reading configuration from " ++ configFile)
-    c <- config configFile
+    c <- config $! configFile
     putStrLn (show c)
-    httpServe (setPort (port c) emptyConfig) (pdfHandler $! c)  
+    let port = (case (port c) of 
+        (WebPort p) -> p)
+    in httpServe (setPort port emptyConfig) (pdfHandler c)  
     
 config :: FilePath -> IO PdfConfig
 config filePath = do
