@@ -32,6 +32,7 @@ import System.IO
 
 newtype Username = Username String deriving (Show, Eq)
 newtype ApiKey = ApiKey String deriving (Show, Eq)
+newtype SrcUrl = SrcUrl String deriving (Show)
 type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
@@ -57,7 +58,7 @@ missing request param = case (rqPostParam (pack param) request) of
 data PdfRequest = PdfRequest {
   username :: Username,
   key :: ApiKey,
-  src :: String,
+  src :: SrcUrl,
   pageSize :: String
 } deriving (Show)
 
@@ -68,12 +69,12 @@ pdfRequest request = case oscar of
     where 
       username = fmap Username (missing request "username")
       key      = fmap ApiKey (missing request "key")
-      src      = missing request "src"
+      src      = fmap SrcUrl (missing request "src")
       pageSize = missing request "page-size"
       errors   = lefts [
         (fmap show username), 
         (fmap show key), 
-        src, 
+        (fmap show src), 
         pageSize
         ]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
@@ -95,11 +96,11 @@ pdfAct req = do
     file <- liftIO (pdf url)
     sendFile file
 
-pdf :: String -> IO (String)
+pdf :: SrcUrl -> IO (String)
 pdf url = do 
     devNull <- openFile "/dev/null" AppendMode
     randomFilename <- (++".pdf") <$> show <$> nextRandom 
-    let commandLine = words ("xvfb-run wkhtmltopdf --page-size A4 " ++ url ++ " " ++ randomFilename)
+    let commandLine = words ("xvfb-run wkhtmltopdf --page-size A4 " ++ (show url) ++ " " ++ randomFilename)
     putStrLn (show commandLine)
     --(_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = (UseHandle devNull)  }
     (_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = Inherit } 
