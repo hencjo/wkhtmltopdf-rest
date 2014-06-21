@@ -81,16 +81,15 @@ pdfRequest request = case oscar of
                        (Right pdf)  -> Right pdf
                        _            -> Left errors
     where 
-      username = fmap Username (missing request "username")
-      key      = fmap ApiKey (missing request "key")
-      src      = fmap SrcUrl (missing request "src")
+      username = Username <$> (missing request "username")
+      key      = ApiKey <$> (missing request "key")
+      src      = SrcUrl <$> (missing request "src")
       pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (missing request "page-size") ) "page-size"
       errors   = lefts [
-        (fmap show username), 
-        (fmap show key), 
-        (fmap show src), 
-        (fmap show pageSize)
-        ]
+        (show <$> username),
+        (show <$> key),
+        (show <$> src),
+        (show <$> pageSize) ]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: PdfConfig -> Snap ()
