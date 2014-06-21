@@ -24,9 +24,8 @@ import Safe(readMay)
 -- [ ] HTTP Status Codes on Errors.
 -- ============ good enough ======== 
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
--- [ ] Validate correct values for pageSize
--- [ ] Implement pageSize
 -- [ ] Validate src, it should not be possible to escape bash!
+-- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 
 -- Test it like this:
 -- curl -v http://localhost:8000 -d src="https://www.google.se" -d username='henrik@hencjo.com' -d key='RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo' -d page-size=A4  > meow.pdf && zathura meow.pdf
@@ -106,14 +105,14 @@ pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
     let url = src req
     modifyResponse $ setContentType "application/pdf"
-    file <- liftIO (pdf url)
+    file <- liftIO (pdf url (pageSize req))
     sendFile file
 
-pdf :: SrcUrl -> IO (String)
-pdf (SrcUrl url) = do 
+pdf :: SrcUrl -> PageSize -> IO (String)
+pdf (SrcUrl url) pageSize = do 
     devNull <- openFile "/dev/null" AppendMode
     randomFilename <- (++".pdf") <$> show <$> nextRandom 
-    let commandLine = "xvfb-run wkhtmltopdf --page-size A4 " ++ (url) ++ " " ++ randomFilename
+    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ url ++ " " ++ randomFilename
     putStrLn commandLine
 
     let cl = words commandLine
