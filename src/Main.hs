@@ -10,6 +10,7 @@ import Data.ByteString.Char8(pack, unpack)
 import Data.ConfigFile
 import Data.Either
 import Data.Either.Utils
+import qualified Data.Text as T
 import System.Environment(getArgs)
 import System.Process
 import System.IO
@@ -30,7 +31,7 @@ import qualified Data.ByteString as B
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 -- [ ] Seems only one xvfb-run can run at a time.
 
-newtype Username = Username String deriving (Eq)
+newtype Username = Username T.Text deriving (Eq)
 newtype ApiKey = ApiKey String deriving (Eq)
 newtype SrcUrl = SrcUrl String deriving (Show)
 newtype Port = Port Int deriving (Show)
@@ -68,7 +69,7 @@ config filePath = do
     val <- readfile emptyCP filePath
     let cp = forceEither val
     let port = forceEither $ (get cp "DEFAULT" "web.port")::Int
-    let username = Username <$> forceEither $ get cp "DEFAULT" "api.user"
+    let username = Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user"
     let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
     return (PdfConfig (username, apiKey) (Port port))
 
@@ -95,7 +96,7 @@ pdfRequest request = case oscar of
                        (Right pdf)  -> Right pdf
                        _            -> Left errors
     where 
-      username = Username <$> (missing request "username")
+      username = Username <$> T.pack <$> (missing request "username")
       key      = ApiKey <$> (missing request "key")
       src      = SrcUrl <$> (missing request "src")
       pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (missing request "page-size") ) "page-size"

@@ -20,6 +20,7 @@ executable pdf
 
   build-depends:             
     base                      >= 4     && < 5,
+    text                      == 0.11.2.0,
     bytestring                >= 0.9.1 && < 0.11,
     MonadCatchIO-transformers >= 0.2.1 && < 0.4,
     mtl                       >= 2     && < 3,
