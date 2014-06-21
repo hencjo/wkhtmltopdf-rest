@@ -115,7 +115,6 @@ callback (SrcUrl url) pageSize tempFile tempHandle = do
 
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
-    let url = src req
     modifyResponse $ setContentType "application/pdf"
     bs <- liftIO (withSystemTempFile "wkhtmltopdf-rest.pdf" (callback (src req) (pageSize req)))
     writeBS bs
