@@ -9,7 +9,6 @@ import Control.Applicative
 import Data.ByteString.Char8(pack, unpack)
 import Data.ConfigFile
 import Data.Either
-import Data.UUID.V4(nextRandom)
 import System.Process
 import System.IO
 import Safe(readMay)
