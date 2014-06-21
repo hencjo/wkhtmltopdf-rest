@@ -12,6 +12,7 @@ import Data.Either
 import Data.UUID.V4(nextRandom)
 import System.Process
 import System.IO
+import Safe(readMay)
 
 -- Requires wkhtmltopdf, xvfb to be installed.
 
@@ -33,6 +34,7 @@ import System.IO
 newtype Username = Username String deriving (Show, Eq)
 newtype ApiKey = ApiKey String deriving (Show, Eq)
 newtype SrcUrl = SrcUrl String deriving (Show)
+data PageSize = A4 | Letter deriving (Show, Read)
 type Credentials = (Username, ApiKey)
 
 data PdfConfig = PdfConfig {
@@ -55,11 +57,17 @@ missing request param = case (rqPostParam (pack param) request) of
                           (Just (v:_)) -> Right (unpack v)
                           _            -> Left ("Missing parameter \"" ++ param ++ "\"")
 
+missing2 :: Either String (Maybe a) -> String -> Either String a
+missing2 e param = case e of 
+                    (Left s     )    -> Left s
+                    (Right (Just a)) -> Right a
+                    otherwise        -> Left ("Missing parameter \"" ++ param ++ "\"")
+
 data PdfRequest = PdfRequest {
   username :: Username,
   key :: ApiKey,
   src :: SrcUrl,
-  pageSize :: String
+  pageSize :: PageSize
 } deriving (Show)
 
 pdfRequest :: Request -> Either [String] PdfRequest
@@ -70,12 +78,12 @@ pdfRequest request = case oscar of
       username = fmap Username (missing request "username")
       key      = fmap ApiKey (missing request "key")
       src      = fmap SrcUrl (missing request "src")
-      pageSize = missing request "page-size"
+      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (missing request "page-size") ) "page-size"
       errors   = lefts [
         (fmap show username), 
         (fmap show key), 
         (fmap show src), 
-        pageSize
+        (fmap show pageSize)
         ]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
