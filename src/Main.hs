@@ -26,6 +26,7 @@ import qualified Data.ByteString as B
 -- [ ] Use PDFCrowds API so that it's easy to switch.
 -- [ ] HTTP Status Codes on Errors.
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
+-- [ ] Nicer error messages when config-file doesn't exist or misses properties.
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 -- [ ] Seems only one xvfb-run can run at a time.
 
@@ -57,16 +58,17 @@ main = do
                         _   -> error "Expected path to config file as argument."
     putStrLn ("Reading configuration from " ++ configFile)
     c <- config configFile
-    httpServe (setPort (port c) emptyConfig) (pdfHandler c)  
+    putStrLn (show c)
+    httpServe (setPort (port c) emptyConfig) (pdfHandler $! c)  
     
 config :: FilePath -> IO PdfConfig
 config filePath = do
     val <- readfile emptyCP filePath
     let cp = forceEither val
-    let meow = forceEither $ (get cp "DEFAULT" "web.port")::Int
-    return (PdfConfig 
-        ((Username "henrik@hencjo.com"), (ApiKey "RzNIKegEXLOt44WwRsx3OH5ZPZiMkKLo"))
-        meow)
+    let webPort = forceEither $ (get cp "DEFAULT" "web.port")::Int
+    let username = Username <$> forceEither $ get cp "DEFAULT" "api.user"
+    let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
+    return (PdfConfig (username, apiKey) webPort)
 
 missing :: Request -> String -> Either String String
 missing request param = case (rqPostParam (pack param) request) of 
