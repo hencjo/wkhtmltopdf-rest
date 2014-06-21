@@ -18,13 +18,12 @@ import Safe(readMay)
 
 -- TODO
 -- [ ] Authenticate against config-file.
--- ============ Pushable ========
 -- [ ] Remove temporary files.
+-- [ ] Validate src, it should not be possible to escape bash!
+-- ============ good enough ======== 
 -- [ ] Use PDFCrowds API so that it's easy to switch.
 -- [ ] HTTP Status Codes on Errors.
--- ============ good enough ======== 
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
--- [ ] Validate src, it should not be possible to escape bash!
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 
 -- Test it like this:
