@@ -14,7 +14,7 @@ import Data.Text.Encoding(encodeUtf8, decodeUtf8)
 import System.Environment(getArgs)
 import System.Process
 import System.IO hiding (readFile)
-import Safe(readMay)
+import Safe(headMay,readMay)
 import System.IO.Temp(withSystemTempFile)
 import qualified Data.ByteString as ByteString
 
@@ -81,10 +81,12 @@ config filePath = do
         )
         (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
-missing :: Request -> T.Text -> Either T.Text T.Text
-missing request param = case (rqPostParam (encodeUtf8 param) request) of 
-                          (Just (v:_)) -> Right (decodeUtf8 v)
-                          _            -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
+missing :: T.Text -> Maybe a -> Either T.Text a
+missing p (Just a) = Right a
+missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
+
+postParam :: Request -> T.Text -> Maybe T.Text
+postParam request param = decodeUtf8 <$> (headMay =<< (rqPostParam (encodeUtf8 param) request))
 
 missing2 :: Either T.Text (Maybe a) -> T.Text -> Either T.Text a
 missing2 e param = case e of 
@@ -97,10 +99,11 @@ pdfRequest request = case oscar of
                        (Right pdf)  -> Right pdf
                        _            -> Left errors
     where 
-      username = Username <$> (missing request "username")
-      key      = ApiKey <$> (missing request "key")
-      src      = SrcUrl <$> (missing request "src")
-      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (T.unpack <$> (missing request "page-size"))) "page-size"
+      post     = postParam request
+      username = Username <$> (missing "username" $ post "username")
+      key      = ApiKey <$> (missing "key" $ post "key")
+      src      = SrcUrl <$> (missing "src" $ post "src")
+      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (T.unpack <$> (missing "page-size" $ post "page-size"))) "page-size"
       errors   = lefts [
         (show <$> username),
         (show <$> key),
