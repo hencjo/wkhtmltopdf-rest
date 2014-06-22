@@ -114,10 +114,9 @@ callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteStrin
 callback (SrcUrl url) pageSize tempFile tempHandle = do
     hClose tempHandle
     devNull <- openFile "/dev/null" AppendMode
-    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ (T.unpack url) ++ " " ++ tempFile -- dangerous
-    putStrLn commandLine
-    let cl = words commandLine -- dangerous
-    (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } -- dangerous
+    let commandLine = ["xvfb-run","wkhtmltopdf","--quiet","--disallow-local-file-access","--page-size",(show pageSize),(T.unpack url),tempFile] -- dangerous
+    putStrLn (unwords commandLine)
+    (_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = Inherit } -- dangerous
     waitForProcess $! pHandle
     hClose devNull
     ByteString.readFile tempFile
