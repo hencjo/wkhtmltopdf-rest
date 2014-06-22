@@ -125,7 +125,7 @@ callback (SrcUrl url) pageSize tempFile tempHandle = do
     putStrLn commandLine
     let cl = words commandLine
     (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
-    exitCode <- waitForProcess pHandle
+    waitForProcess $! pHandle
     hClose devNull
     ByteString.readFile tempFile
 
