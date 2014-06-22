@@ -37,7 +37,7 @@ newtype SrcUrl = SrcUrl T.Text deriving (Show)
 newtype Port = Port Int deriving (Show)
 
 data PageSize = A4 | Letter deriving (Show, Read)
-type Credentials = (Username, ApiKey)
+data Credentials = Credentials Username ApiKey deriving (Show, Eq)
 
 data PdfConfig = PdfConfig {
   credentials :: Credentials,
@@ -70,9 +70,10 @@ config :: FilePath -> IO PdfConfig
 config filePath = do
     val <- readfile emptyCP filePath
     let cp = forceEither val
-    return (PdfConfig (
-        Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user",
-        ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key"
+    return (PdfConfig 
+        (Credentials 
+            (Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user")
+            (ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key")
         )
         (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
@@ -118,7 +119,7 @@ auth config req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
      where
-        authenticates = (username req, key req) == (credentials config)
+        authenticates = Credentials (username req) (key req) == (credentials config)
 
 callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
