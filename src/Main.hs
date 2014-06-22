@@ -54,7 +54,7 @@ data PdfRequest = PdfRequest {
   key :: ApiKey,
   src :: SrcUrl,
   pageSize :: PageSize
-}
+} deriving (Show)
 
 main :: IO ()
 main = do
