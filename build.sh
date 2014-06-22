@@ -1,4 +1,3 @@
 #!/bin/bash
-cabal build
-strip dist/build/pdf/pdf
+cabal build && strip dist/build/pdf/pdf
 
