@@ -13,10 +13,10 @@ import qualified Data.Text as T
 import Data.Text.Encoding(encodeUtf8, decodeUtf8)
 import System.Environment(getArgs)
 import System.Process
-import System.IO
+import System.IO hiding (readFile)
 import Safe(readMay)
 import System.IO.Temp(withSystemTempFile)
-import qualified Data.ByteString as B
+import qualified Data.ByteString as ByteString
 
 -- Requires wkhtmltopdf, xvfb to be installed.
 
@@ -117,7 +117,7 @@ auth config req
      where
         authenticates = (username req, key req) == (credentials config)
 
-callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (B.ByteString)
+callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
     hClose tempHandle
     devNull <- openFile "/dev/null" AppendMode
@@ -127,7 +127,7 @@ callback (SrcUrl url) pageSize tempFile tempHandle = do
     (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
     exitCode <- waitForProcess pHandle
     hClose devNull
-    B.readFile tempFile
+    ByteString.readFile tempFile
 
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
