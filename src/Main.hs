@@ -88,12 +88,6 @@ missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
 postParam :: Request -> T.Text -> Maybe T.Text
 postParam request param = decodeUtf8 <$> (headMay =<< (rqPostParam (encodeUtf8 param) request))
 
-missing2 :: Either T.Text (Maybe a) -> T.Text -> Either T.Text a
-missing2 e param = case e of 
-                    (Left s     )    -> Left s
-                    (Right (Just a)) -> Right a
-                    _                -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
-
 pdfRequest :: Request -> Either [T.Text] PdfRequest
 pdfRequest request = case oscar of 
                        (Right pdf)  -> Right pdf
@@ -103,7 +97,7 @@ pdfRequest request = case oscar of
       username = Username <$> (missing "username" $ post "username")
       key      = ApiKey <$> (missing "key" $ post "key")
       src      = SrcUrl <$> (missing "src" $ post "src")
-      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (T.unpack <$> (missing "page-size" $ post "page-size"))) "page-size"
+      pageSize = missing "page-size" ((\s -> (readMay s)::(Maybe PageSize)) =<< T.unpack <$> post "page-size")
       errors   = lefts [
         (show <$> username),
         (show <$> key),
