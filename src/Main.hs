@@ -6,7 +6,6 @@ import Snap.Http.Server
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Applicative
-import Data.ByteString.Char8 as Char8 (pack, unpack)
 import Data.ConfigFile
 import Data.Either
 import Data.Either.Utils
