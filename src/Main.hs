@@ -90,7 +90,7 @@ missing2 :: Either T.Text (Maybe a) -> T.Text -> Either T.Text a
 missing2 e param = case e of 
                     (Left s     )    -> Left s
                     (Right (Just a)) -> Right a
-                    otherwise        -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
+                    _                -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
 
 pdfRequest :: Request -> Either [T.Text] PdfRequest
 pdfRequest request = case oscar of 
