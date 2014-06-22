@@ -9,8 +9,10 @@ import Control.Applicative
 import Data.ConfigFile
 import Data.Either
 import Data.Either.Utils
+import Data.Maybe(listToMaybe)
 import qualified Data.Text as T
 import Data.Text.Encoding(encodeUtf8, decodeUtf8)
+import Network.URI (URI, parseURI, scheme)
 import System.Environment(getArgs)
 import System.Process
 import System.IO hiding (readFile)
@@ -83,6 +85,16 @@ missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
 postParam :: Request -> T.Text -> Maybe T.Text
 postParam request param = decodeUtf8 <$> (headMay =<< (rqPostParam (encodeUtf8 param) request))
 
+validURI :: T.Text -> Maybe T.Text
+validURI url = T.pack <$> show <$> (meow =<< (parseURI (T.unpack url)))
+    where
+        meow :: URI -> Maybe URI
+        meow uri = listToMaybe (filter httpOrHttps [uri])
+        httpOrHttps :: URI -> Bool 
+        httpOrHttps uri = (scheme == "http" || scheme == "https")
+            where 
+                scheme = (Network.URI.scheme uri) 
+
 pdfRequest :: Request -> Either [T.Text] PdfRequest
 pdfRequest request = case oscar of 
                        (Right pdf)  -> Right pdf
@@ -91,7 +103,7 @@ pdfRequest request = case oscar of
       post     = postParam request
       username = Username <$> (missing "username" $ post "username")
       key      = ApiKey <$> (missing "key" $ post "key")
-      src      = SrcUrl <$> (missing "src" $ post "src")
+      src      = SrcUrl <$> (missing "src" $ (validURI =<< (post "src")))
       pageSize = missing "page-size" ((\s -> (readMay s)::(Maybe PageSize)) =<< T.unpack <$> post "page-size")
       errors   = lefts [
         (show <$> username),

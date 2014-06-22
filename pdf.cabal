@@ -31,7 +31,8 @@ executable pdf
     safe                      == 0.3.4,
     temporary                 == 1.2.0.3,
     ConfigFile                == 1.1.1,
-    MissingH                  == 1.2.1.0
+    MissingH                  == 1.2.1.0,
+    network                   == 2.3.0.13
 
   ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
                  -fno-warn-unused-do-bind -fwarn-incomplete-uni-patterns
