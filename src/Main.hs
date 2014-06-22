@@ -6,11 +6,12 @@ import Snap.Http.Server
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Applicative
-import Data.ByteString.Char8(pack, unpack)
+import Data.ByteString.Char8 as Char8 (pack, unpack)
 import Data.ConfigFile
 import Data.Either
 import Data.Either.Utils
 import qualified Data.Text as T
+import Data.Text.Encoding(encodeUtf8, decodeUtf8)
 import System.Environment(getArgs)
 import System.Process
 import System.IO
@@ -80,18 +81,18 @@ config filePath = do
     let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
     return (PdfConfig (username, apiKey) (Port port))
 
-missing :: Request -> String -> Either String String
-missing request param = case (rqPostParam (pack param) request) of 
-                          (Just (v:_)) -> Right (unpack v)
-                          _            -> Left ("Missing parameter \"" ++ param ++ "\"")
+missing :: Request -> T.Text -> Either T.Text String
+missing request param = case (rqPostParam (encodeUtf8 param) request) of 
+                          (Just (v:_)) -> Right (Char8.unpack v)
+                          _            -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
 
-missing2 :: Either String (Maybe a) -> String -> Either String a
+missing2 :: Either T.Text (Maybe a) -> T.Text -> Either T.Text a
 missing2 e param = case e of 
                     (Left s     )    -> Left s
                     (Right (Just a)) -> Right a
-                    otherwise        -> Left ("Missing parameter \"" ++ param ++ "\"")
+                    otherwise        -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
 
-pdfRequest :: Request -> Either [String] PdfRequest
+pdfRequest :: Request -> Either [T.Text] PdfRequest
 pdfRequest request = case oscar of 
                        (Right pdf)  -> Right pdf
                        _            -> Left errors
@@ -108,9 +109,9 @@ pdfRequest request = case oscar of
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: PdfConfig -> Snap ()
-pdfHandler config = (getsRequest (pdfRequest >=> (auth config))) >>= either (writeBS . pack . Prelude.concat) pdfAct
+pdfHandler config = (getsRequest (pdfRequest >=> (auth config))) >>= either (writeBS . encodeUtf8 . T.concat) pdfAct
 
-auth :: PdfConfig -> PdfRequest -> Either [String] PdfRequest
+auth :: PdfConfig -> PdfRequest -> Either [T.Text] PdfRequest
 auth config req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
