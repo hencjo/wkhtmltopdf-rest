@@ -29,6 +29,7 @@ import qualified Data.ByteString as ByteString
 -- [ ] On startup, check that dependencies (wkhtmltopdf, xvfb) are installed.
 -- [ ] Nicer error messages when config-file doesn't exist or misses properties.
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
+-- [ ] Nicer error message when Url is not a URL.
 -- [ ] Seems only one xvfb-run can run at a time.
 
 newtype Username = Username T.Text deriving (Eq, Show)
