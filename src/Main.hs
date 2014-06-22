@@ -81,9 +81,9 @@ config filePath = do
     let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
     return (PdfConfig (username, apiKey) (Port port))
 
-missing :: Request -> T.Text -> Either T.Text String
+missing :: Request -> T.Text -> Either T.Text T.Text
 missing request param = case (rqPostParam (encodeUtf8 param) request) of 
-                          (Just (v:_)) -> Right (Char8.unpack v)
+                          (Just (v:_)) -> Right (decodeUtf8 v)
                           _            -> Left ("Missing parameter \"" `T.append` param `T.append` "\"")
 
 missing2 :: Either T.Text (Maybe a) -> T.Text -> Either T.Text a
@@ -97,10 +97,10 @@ pdfRequest request = case oscar of
                        (Right pdf)  -> Right pdf
                        _            -> Left errors
     where 
-      username = Username <$> T.pack <$> (missing request "username")
-      key      = ApiKey <$> (missing request "key")
-      src      = SrcUrl <$> (missing request "src")
-      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (missing request "page-size") ) "page-size"
+      username = Username <$> (missing request "username")
+      key      = ApiKey <$> T.unpack <$> (missing request "key")
+      src      = SrcUrl <$> T.unpack <$> (missing request "src")
+      pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (T.unpack <$> (missing request "page-size"))) "page-size"
       errors   = lefts [
         (show <$> username),
         (show <$> key),
