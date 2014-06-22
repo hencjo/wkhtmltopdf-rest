@@ -33,8 +33,8 @@ import qualified Data.ByteString as B
 -- [ ] Seems only one xvfb-run can run at a time.
 
 newtype Username = Username T.Text deriving (Eq)
-newtype ApiKey = ApiKey String deriving (Eq)
-newtype SrcUrl = SrcUrl String deriving (Show)
+newtype ApiKey = ApiKey T.Text deriving (Eq)
+newtype SrcUrl = SrcUrl T.Text deriving (Show)
 newtype Port = Port Int deriving (Show)
 
 instance Show Username where
@@ -98,8 +98,8 @@ pdfRequest request = case oscar of
                        _            -> Left errors
     where 
       username = Username <$> (missing request "username")
-      key      = ApiKey <$> T.unpack <$> (missing request "key")
-      src      = SrcUrl <$> T.unpack <$> (missing request "src")
+      key      = ApiKey <$> (missing request "key")
+      src      = SrcUrl <$> (missing request "src")
       pageSize = missing2 (fmap (\s -> (readMay s)::(Maybe PageSize)) (T.unpack <$> (missing request "page-size"))) "page-size"
       errors   = lefts [
         (show <$> username),
@@ -122,7 +122,7 @@ callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (B.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
     hClose tempHandle
     devNull <- openFile "/dev/null" AppendMode
-    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ url ++ " " ++ tempFile
+    let commandLine = "xvfb-run wkhtmltopdf --page-size " ++ (show pageSize) ++ " " ++ (T.unpack url) ++ " " ++ tempFile
     putStrLn commandLine
     let cl = words commandLine
     (_, _, _, pHandle) <- createProcess (proc (head cl) (tail cl)){ std_err = Inherit } 
