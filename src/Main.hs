@@ -31,15 +31,10 @@ import qualified Data.ByteString as ByteString
 -- [ ] Nicer error messages when PageSize is not one of the enumerated options. 
 -- [ ] Seems only one xvfb-run can run at a time.
 
-newtype Username = Username T.Text deriving (Eq)
-newtype ApiKey = ApiKey T.Text deriving (Eq)
+newtype Username = Username T.Text deriving (Eq, Show)
+newtype ApiKey = ApiKey T.Text deriving (Eq, Show)
 newtype SrcUrl = SrcUrl T.Text deriving (Show)
 newtype Port = Port Int deriving (Show)
-
-instance Show Username where
-    show (Username a) = show a
-instance Show ApiKey where
-    show (ApiKey a) = show a
 
 data PageSize = A4 | Letter deriving (Show, Read)
 type Credentials = (Username, ApiKey)
