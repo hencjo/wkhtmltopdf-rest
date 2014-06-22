@@ -77,7 +77,7 @@ config filePath = do
     let cp = forceEither val
     let port = forceEither $ (get cp "DEFAULT" "web.port")::Int
     let username = Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user"
-    let apiKey = ApiKey <$> forceEither $ get cp "DEFAULT" "api.key"
+    let apiKey = ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key"
     return (PdfConfig (username, apiKey) (Port port))
 
 missing :: Request -> T.Text -> Either T.Text T.Text
