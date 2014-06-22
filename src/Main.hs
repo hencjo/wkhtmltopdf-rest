@@ -75,10 +75,11 @@ config :: FilePath -> IO PdfConfig
 config filePath = do
     val <- readfile emptyCP filePath
     let cp = forceEither val
-    let port = forceEither $ (get cp "DEFAULT" "web.port")::Int
-    let username = Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user"
-    let apiKey = ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key"
-    return (PdfConfig (username, apiKey) (Port port))
+    return (PdfConfig (
+        Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user",
+        ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key"
+        )
+        (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
 missing :: Request -> T.Text -> Either T.Text T.Text
 missing request param = case (rqPostParam (encodeUtf8 param) request) of 
