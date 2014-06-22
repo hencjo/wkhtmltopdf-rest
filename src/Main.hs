@@ -49,6 +49,13 @@ data PdfConfig = PdfConfig {
   port :: Port
 } deriving (Show)
 
+data PdfRequest = PdfRequest {
+  username :: Username,
+  key :: ApiKey,
+  src :: SrcUrl,
+  pageSize :: PageSize
+}
+
 main :: IO ()
 main = do
     a <- getArgs
@@ -83,13 +90,6 @@ missing2 e param = case e of
                     (Left s     )    -> Left s
                     (Right (Just a)) -> Right a
                     otherwise        -> Left ("Missing parameter \"" ++ param ++ "\"")
-
-data PdfRequest = PdfRequest {
-  username :: Username,
-  key :: ApiKey,
-  src :: SrcUrl,
-  pageSize :: PageSize
-}
 
 pdfRequest :: Request -> Either [String] PdfRequest
 pdfRequest request = case oscar of 
