@@ -116,11 +116,11 @@ pdfHandler :: PdfConfig -> Snap ()
 pdfHandler pc = (getsRequest (pdfRequest >=> (auth pc))) >>= either (writeText . T.concat) pdfAct
 
 auth :: PdfConfig -> PdfRequest -> Either [T.Text] PdfRequest
-auth config req
+auth pc req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
      where
-        authenticates = Credentials (username req) (key req) == (credentials config)
+        authenticates = Credentials (username req) (key req) == (credentials pc)
 
 callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
