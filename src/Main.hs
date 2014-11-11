@@ -103,7 +103,7 @@ pdfRequest request = case oscar of
       post     = postParam request
       username = Username <$> (missing "username" $ post "username")
       key      = ApiKey <$> (missing "key" $ post "key")
-      src      = SrcUrl <$> (missing "src" $ (validURI =<< (post "src")))
+      src      = SrcUrl <$> (missing "src" $ post "src" >>= validURI)
       pageSize = missing "page-size" ((\s -> (readMay s)::(Maybe PageSize)) =<< T.unpack <$> post "page-size")
       errors   = lefts [
         (show <$> username),
