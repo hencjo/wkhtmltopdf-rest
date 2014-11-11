@@ -41,8 +41,8 @@ data PageSize = A4 | Letter deriving (Show, Read)
 data Credentials = Credentials Username ApiKey deriving (Show, Eq)
 
 data PdfConfig = PdfConfig {
-  credentials :: Credentials,
-  port :: Port
+  configCredentials :: Credentials,
+  configPort :: Port
 } deriving (Show)
 
 data PdfRequest = PdfRequest {
@@ -64,7 +64,7 @@ main = do
     httpServe (setPort (port2 c) emptyConfig) (pdfHandler c)  
         where 
             port2 :: PdfConfig -> Int
-            port2 pdfConfig = case (port pdfConfig) of 
+            port2 pdfConfig = case (configPort pdfConfig) of
                                  (Port p) -> p
     
 config :: FilePath -> IO PdfConfig
