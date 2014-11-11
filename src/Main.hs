@@ -46,10 +46,10 @@ data PdfConfig = PdfConfig {
 } deriving (Show)
 
 data PdfRequest = PdfRequest {
-  username :: Username,
-  key :: ApiKey,
-  src :: SrcUrl,
-  pageSize :: PageSize
+  requestUsername :: Username,
+  requestKey :: ApiKey,
+  requestSrc :: SrcUrl,
+  requestPageSize :: PageSize
 } deriving (Show)
 
 main :: IO ()
@@ -124,7 +124,7 @@ auth pc req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
      where
-        authenticates = Credentials (username req) (key req) == (credentials pc)
+        authenticates = Credentials (requestUsername req) (requestKey req) == (credentials pc)
 
 callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
@@ -139,6 +139,6 @@ callback (SrcUrl url) pageSize tempFile tempHandle = do
 
 pdfAct :: PdfRequest -> Snap ()
 pdfAct req = do 
-    bs <- liftIO (withSystemTempFile "wkhtmltopdf-rest.pdf" (callback (src req) (pageSize req)))
+    bs <- liftIO (withSystemTempFile "wkhtmltopdf-rest.pdf" (callback (requestSrc req) (requestPageSize req)))
     modifyResponse $ setContentType "application/pdf"
     writeBS bs
