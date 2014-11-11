@@ -35,6 +35,9 @@ import qualified Data.ByteString as ByteString
 -- Done:
 -- -Wall, -Werror
 -- =<< och överdrivna <$>, $ mm förenklade till . $ och >>=
+-- PdfHandler -> ResponseHandler med Snap i do-notation + Either som "vad det nu kallas"-notation.
+-- seq i config - hjälp?!
+
 newtype Username = Username T.Text deriving (Eq, Show)
 newtype ApiKey = ApiKey T.Text deriving (Eq, Show)
 newtype SrcUrl = SrcUrl T.Text deriving (Show)
