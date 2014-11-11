@@ -127,7 +127,7 @@ auth pc req
      | authenticates = (Right req)
      | otherwise     = (Left ["Authorisation failed"])
      where
-        authenticates = Credentials (requestUsername req) (requestKey req) == (credentials pc)
+        authenticates = Credentials (requestUsername req) (requestKey req) == (configCredentials pc)
 
 callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteString)
 callback (SrcUrl url) pageSize tempFile tempHandle = do
