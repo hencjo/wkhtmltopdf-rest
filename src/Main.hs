@@ -79,7 +79,7 @@ config filePath = do
         (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
 missing :: T.Text -> Maybe a -> Either T.Text a
-missing p (Just a) = Right a
+missing _ (Just a) = Right a
 missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
 
 postParam :: Request -> T.Text -> Maybe T.Text
