@@ -113,7 +113,7 @@ pdfRequest request = case oscar of
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
 pdfHandler :: PdfConfig -> Snap ()
-pdfHandler config = (getsRequest (pdfRequest >=> (auth config))) >>= either (writeText . T.concat) pdfAct
+pdfHandler pc = (getsRequest (pdfRequest >=> (auth pc))) >>= either (writeText . T.concat) pdfAct
 
 auth :: PdfConfig -> PdfRequest -> Either [T.Text] PdfRequest
 auth config req
