@@ -83,10 +83,10 @@ missing _ (Just a) = Right a
 missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
 
 postParam :: Request -> T.Text -> Maybe T.Text
-postParam request param = decodeUtf8 <$> (headMay =<< (rqPostParam (encodeUtf8 param) request))
+postParam request param = decodeUtf8 <$> ((rqPostParam . encodeUtf8) param request >>= headMay)
 
 validURI :: T.Text -> Maybe T.Text
-validURI url = (T.pack . show) <$> (((parseURI . T.unpack) url) >>= meow)
+validURI url = (T.pack . show) <$> ((parseURI . T.unpack) url >>= meow)
     where
         meow :: URI -> Maybe URI
         meow uri = listToMaybe (filter httpOrHttps [uri])
