@@ -73,8 +73,8 @@ config filePath = do
     let cp = forceEither val
     return (PdfConfig 
         (Credentials 
-            (Username <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.user")
-            (ApiKey <$> T.pack <$> forceEither $ get cp "DEFAULT" "api.key")
+            (Username . T.pack . forceEither $ get cp "DEFAULT" "api.user")
+            (ApiKey . T.pack . forceEither $ get cp "DEFAULT" "api.key")
         )
         (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
