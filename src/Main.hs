@@ -64,7 +64,7 @@ main = do
     putStrLn ("Reading configuration from " ++ configFile)
     c <- config $! configFile
     putStrLn (show c)
-    httpServe (setPort (port2 c) emptyConfig) (pdfHandler c)  
+    httpServe (setPort (port2 c) emptyConfig) (responseHandler c)
         where 
             port2 :: PdfConfig -> Int
             port2 pdfConfig = case (configPort pdfConfig) of
@@ -119,8 +119,12 @@ pdfRequest request = case oscar of
         (show <$> pageSize) ]
       oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
 
-pdfHandler :: PdfConfig -> Snap ()
-pdfHandler pc = (getsRequest (pdfRequest >=> (auth pc))) >>= either (writeText . T.concat) pdfAct
+responseHandler :: PdfConfig -> Snap ()
+responseHandler pc = do
+    request <- getRequest
+    either errorHandler pdfHandler ((pdfRequest >=> (auth pc)) request)
+        where
+            errorHandler = writeText . T.concat
 
 auth :: PdfConfig -> PdfRequest -> Either [T.Text] PdfRequest
 auth pc req
@@ -140,8 +144,8 @@ callback (SrcUrl url) pageSize tempFile tempHandle = do
     hClose devNull
     ByteString.readFile tempFile
 
-pdfAct :: PdfRequest -> Snap ()
-pdfAct req = do 
+pdfHandler :: PdfRequest -> Snap ()
+pdfHandler req = do
     bs <- liftIO (withSystemTempFile "wkhtmltopdf-rest.pdf" (callback (requestSrc req) (requestPageSize req)))
     modifyResponse $ setContentType "application/pdf"
     writeBS bs
