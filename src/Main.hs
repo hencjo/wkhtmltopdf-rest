@@ -12,7 +12,7 @@ import Data.Either.Utils
 import Data.Maybe(listToMaybe)
 import qualified Data.Text as T
 import Data.Text.Encoding(encodeUtf8, decodeUtf8)
-import Network.URI (URI, parseURI, scheme)
+import Network.URI (URI, parseURI, uriScheme)
 import System.Environment(getArgs)
 import System.Process
 import System.IO hiding (readFile)
@@ -93,7 +93,7 @@ validURI url = T.pack <$> show <$> (meow =<< (parseURI (T.unpack url)))
         httpOrHttps :: URI -> Bool 
         httpOrHttps uri = (scheme == "http" || scheme == "https")
             where 
-                scheme = (Network.URI.scheme uri) 
+                scheme = (Network.URI.uriScheme uri)
 
 pdfRequest :: Request -> Either [T.Text] PdfRequest
 pdfRequest request = case oscar of 
