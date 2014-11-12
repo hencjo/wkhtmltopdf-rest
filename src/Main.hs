@@ -3,7 +3,6 @@ module Main where
 
 import Snap.Core
 import Snap.Http.Server
-import Control.Monad
 import Control.Monad.IO.Class
 import Control.Applicative
 import Data.ConfigFile
@@ -125,7 +124,8 @@ pdfRequest request = case oscar of
 responseHandler :: PdfConfig -> Snap ()
 responseHandler pc = do
     request <- getRequest
-    either errorHandler pdfHandler ((pdfRequest >=> (auth pc)) request)
+--    either errorHandler pdfHandler ((pdfRequest >=> (auth pc)) request)
+    either errorHandler pdfHandler ((pdfRequest request) >>= (auth pc))
         where
             errorHandler = writeText . T.concat
 
