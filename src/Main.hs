@@ -6,7 +6,6 @@ import Snap.Http.Server
 import Control.Monad.IO.Class
 import Control.Applicative
 import Data.ConfigFile
-import Data.Either
 import Data.Either.Utils
 import Data.Maybe(listToMaybe)
 import qualified Data.Text as T
@@ -18,6 +17,8 @@ import System.IO hiding (readFile)
 import Safe(headMay,readMay)
 import System.IO.Temp(withSystemTempFile)
 import qualified Data.ByteString as ByteString
+
+import Validation
 
 -- Requires wkhtmltopdf, xvfb to be installed.
 
@@ -82,9 +83,12 @@ config filePath = do
         )
         (Port (forceEither $ (get cp "DEFAULT" "web.port")::Int)))
 
-missing :: T.Text -> Maybe a -> Either T.Text a
-missing _ (Just a) = Right a
-missing p _        = Left (T.concat ["Missing parameter \"", p,  "\""])
+m :: String -> Maybe a -> Validation a
+m _ (Just a) = Valid a
+m p _        = Invalid p
+
+missing :: String -> Maybe a -> Validation a
+missing msg = m (concat ["Missing parameter \"", msg, "\""])
 
 postParam :: Request -> T.Text -> Maybe T.Text
 postParam request param = decodeUtf8 <$> ((rqPostParam . encodeUtf8) param request >>= headMay)
@@ -99,11 +103,9 @@ validURI url = T.pack . show <$> ((parseURI . T.unpack) url >>= meow)
             where 
                 scheme = (Network.URI.uriScheme uri)
 
-pdfRequest :: Request -> Either [T.Text] PdfRequest
-pdfRequest request = case oscar of 
-                       (Right pdf)  -> Right pdf
-                       _            -> Left errors
-    where 
+pdfRequest :: Request -> AccumulatedValidation PdfRequest
+pdfRequest request = (Success PdfRequest) <#> username <#> key <#> src <#> pageSize
+  where
       post     = postParam request
       username = Username <$> (missing "username" $ post "username")
       key      = ApiKey <$> (missing "key" $ post "key")
@@ -113,20 +115,32 @@ pdfRequest request = case oscar of
           res <- post "page-size"
           ps <- (readMay $ T.unpack res) :: Maybe PageSize
           return (ps :: PageSize)
-      errors   = lefts [
-        (show <$> username),
-        (show <$> key),
-        (show <$> src),
-        (show <$> pageSize) ]
-      oscar    = PdfRequest <$> username <*> key <*> src <*> pageSize
+
+-- I want to be able to write:
+--     case ((pdfRequest request) >>= (auth pc)) of
+--        Failure messages -> (writeText . T.pack . concat) messages
+--        Success request  -> pdfHandler request
+--
+-- Can this be done automatically for me?
+-- Also, I'm noticing that the structure really is:
+-- do
+--  b <- f a
+--  c <- g a
+--  h b c a     -- <-- Hang on! Isn't that very Applicative?
+--
+-- There's not really a dependency between f and g.
+-- f and g are pdfRequest and (auth pc)
+--
+b :: AccumulatedValidation a -> (a -> Either [T.Text] a) -> Either [T.Text] a
+(Success a) `b`  f = f a
+(Failure xs) `b` _ = Left (map T.pack xs)
 
 responseHandler :: PdfConfig -> Snap ()
 responseHandler pc = do
     request <- getRequest
---    either errorHandler pdfHandler ((pdfRequest >=> (auth pc)) request)
-    either errorHandler pdfHandler ((pdfRequest request) >>= (auth pc))
-        where
-            errorHandler = writeText . T.concat
+    case ((pdfRequest request) `b` (auth pc)) of
+         (Left messages) -> (writeText . T.concat) messages
+         (Right r)       -> pdfHandler r
 
 auth :: PdfConfig -> PdfRequest -> Either [T.Text] PdfRequest
 auth pc req

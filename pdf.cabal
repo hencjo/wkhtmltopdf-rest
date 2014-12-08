@@ -17,6 +17,7 @@ cabal-version:       >=1.8
 executable pdf
   hs-source-dirs: src
   main-is: Main.hs
+  other-modules: Validation
 
   build-depends:             
     base                      >= 4     && < 5,
