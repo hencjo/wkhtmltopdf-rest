@@ -33,14 +33,14 @@ import qualified Data.ByteString as ByteString
 
 -- Done:
 -- -Wall, -Werror
--- =<< och överdrivna <$>, $ mm förenklade till . $ och >>=
+-- =<<, >=> och överdrivna <$>, $ mm förenklade till . $ och >>=
 -- PdfHandler -> ResponseHandler med Snap i do-notation + Either som "vad det nu kallas"-notation.
 -- seq i config - hjälp?!
 
 newtype Username = Username T.Text deriving (Eq, Show)
 newtype ApiKey = ApiKey T.Text deriving (Eq, Show)
 newtype SrcUrl = SrcUrl T.Text deriving (Show)
-newtype Port = Port Int deriving (Show)
+newtype Port = Port Int deriving (Show, Eq)
 
 data PageSize = A4 | Letter deriving (Show, Read)
 data Credentials = Credentials Username ApiKey deriving (Show, Eq)
@@ -48,7 +48,7 @@ data Credentials = Credentials Username ApiKey deriving (Show, Eq)
 data PdfConfig = PdfConfig {
   configCredentials :: Credentials,
   configPort :: Port
-} deriving (Show)
+} deriving (Show, Eq)
 
 data PdfRequest = PdfRequest {
   requestUsername :: Username,
@@ -64,9 +64,8 @@ main = do
                         f:_ -> f
                         _   -> error "Expected path to config file as argument."
     putStrLn ("Reading configuration from " ++ configFile)
-    c <- config $! configFile
-    putStrLn (show c)
-    httpServe (setPort (port2 c) emptyConfig) (responseHandler c)
+    c <- config configFile
+    c == c `seq` httpServe (setPort (port2 c) emptyConfig) (responseHandler c)
         where 
             port2 :: PdfConfig -> Int
             port2 pdfConfig = case (configPort pdfConfig) of
@@ -140,10 +139,10 @@ callback :: SrcUrl -> PageSize -> FilePath -> Handle -> IO (ByteString.ByteStrin
 callback (SrcUrl url) pageSize tempFile tempHandle = do
     hClose tempHandle
     devNull <- openFile "/dev/null" AppendMode
-    let commandLine = ["xvfb-run","wkhtmltopdf","--quiet","--disallow-local-file-access","--page-size",(show pageSize),(T.unpack url),tempFile] -- dangerous
+    let commandLine = ["xvfb-run","wkhtmltopdf","--quiet","--page-size",(show pageSize),(T.unpack url),tempFile] -- dangerous
     putStrLn (unwords commandLine)
     (_, _, _, pHandle) <- createProcess (proc (head commandLine) (tail commandLine)){ std_err = Inherit } -- dangerous
-    waitForProcess $! pHandle
+    waitForProcess pHandle
     hClose devNull
     ByteString.readFile tempFile
 
