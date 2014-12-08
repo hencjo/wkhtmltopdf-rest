@@ -99,7 +99,7 @@ validURI url = T.pack . show <$> ((parseURI . T.unpack) url >>= meow)
         meow :: URI -> Maybe URI
         meow uri = listToMaybe (filter httpOrHttps [uri])
         httpOrHttps :: URI -> Bool 
-        httpOrHttps uri = (scheme == "http" || scheme == "https")
+        httpOrHttps uri = (scheme == "http:" || scheme == "https:")
             where 
                 scheme = (Network.URI.uriScheme uri)
 
